@@ -1,12 +1,7 @@
 // Haversine distance calculation in meters between two lat/lng points.
 // All server-side validations MUST rely on this function; the frontend
 // is treated as untrusted input.
-export function haversineDistanceMeters(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+function haversineDistanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371e3; // metres
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
@@ -21,4 +16,4 @@ export function haversineDistanceMeters(
   return R * c;
 }
 
-
+module.exports = { haversineDistanceMeters };

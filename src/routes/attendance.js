@@ -1,9 +1,9 @@
-import express from "express";
-import { SessionModel } from "../models/Session";
-import { AttendanceModel } from "../models/Attendance";
-import { haversineDistanceMeters } from "../utils/geo";
+const express = require("express");
+const { SessionModel } = require("../models/Session");
+const { AttendanceModel } = require("../models/Attendance");
+const { haversineDistanceMeters } = require("../utils/geo");
 
-export const attendanceRouter = express.Router();
+const attendanceRouter = express.Router();
 
 // POST /api/attendance/:token
 // Accepts a single student's attendance submission.
@@ -18,7 +18,7 @@ attendanceRouter.post("/:token", async (req, res, next) => {
       indexNumber,
       latitude,
       longitude,
-    } = req.body ?? {};
+    } = req.body || {};
 
     if (
       !fullName ||
@@ -46,7 +46,7 @@ attendanceRouter.post("/:token", async (req, res, next) => {
       latitude,
       longitude,
       session.latitude,
-      session.longitude,
+      session.longitude
     );
 
     if (distance > session.radiusMeters) {
@@ -69,9 +69,9 @@ attendanceRouter.post("/:token", async (req, res, next) => {
         id: submission._id,
         createdAt: submission.createdAt,
       });
-    } catch (err: any) {
+    } catch (err) {
       // Duplicate index violation = student already submitted.
-      if (err?.code === 11000) {
+      if (err && err.code === 11000) {
         return res
           .status(409)
           .json({ error: "Attendance already submitted for this session" });
@@ -83,4 +83,4 @@ attendanceRouter.post("/:token", async (req, res, next) => {
   }
 });
 
-
+module.exports = attendanceRouter;

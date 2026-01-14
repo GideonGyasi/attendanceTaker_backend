@@ -1,15 +1,15 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import { AdminModel } from "../models/Admin";
-import { signAdminToken, requireAdmin, AuthRequest } from "../middleware/auth";
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const { AdminModel } = require("../models/Admin");
+const { signAdminToken, requireAdmin } = require("../middleware/auth");
 
-export const authRouter = express.Router();
+const authRouter = express.Router();
 
 // POST /api/auth/register
 // Simple email/password admin registration.
 authRouter.post("/register", async (req, res, next) => {
   try {
-    const { email, password } = req.body ?? {};
+    const { email, password } = req.body || {};
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return res.status(400).json({ error: "Email and password are required" });
     }
@@ -32,7 +32,7 @@ authRouter.post("/register", async (req, res, next) => {
 // POST /api/auth/login
 authRouter.post("/login", async (req, res, next) => {
   try {
-    const { email, password } = req.body ?? {};
+    const { email, password } = req.body || {};
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return res.status(400).json({ error: "Email and password are required" });
     }
@@ -55,7 +55,7 @@ authRouter.post("/login", async (req, res, next) => {
 });
 
 // GET /api/auth/me
-authRouter.get("/me", requireAdmin, async (req: AuthRequest, res, next) => {
+authRouter.get("/me", requireAdmin, async (req, res, next) => {
   try {
     const admin = await AdminModel.findById(req.adminId).lean();
     if (!admin) {
@@ -67,4 +67,4 @@ authRouter.get("/me", requireAdmin, async (req: AuthRequest, res, next) => {
   }
 });
 
-
+module.exports = authRouter;

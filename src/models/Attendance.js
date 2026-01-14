@@ -1,19 +1,8 @@
-import mongoose, { Document, Schema } from "mongoose";
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-// Document representing a single student's attendance submission.
-export interface AttendanceDocument extends Document {
-  sessionId: mongoose.Types.ObjectId;
-  token: string; // denormalized for easier lookup by token
-  fullName: string;
-  studentNumber: string;
-  studentId: string;
-  indexNumber: string;
-  latitude: number;
-  longitude: number;
-  createdAt: Date;
-}
-
-const AttendanceSchema = new Schema<AttendanceDocument>(
+// Document representing a single student's attendance submission
+const AttendanceSchema = new Schema(
   {
     sessionId: {
       type: Schema.Types.ObjectId,
@@ -35,10 +24,10 @@ const AttendanceSchema = new Schema<AttendanceDocument>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-  },
+  }
 );
 
-// Enforce "one submission per session per student" using a compound index.
+// Enforce "one submission per session per student" using a compound index
 AttendanceSchema.index(
   {
     sessionId: 1,
@@ -46,20 +35,17 @@ AttendanceSchema.index(
     studentId: 1,
     indexNumber: 1,
   },
-  { unique: true },
+  { unique: true }
 );
 
-// TTL index: attendance submissions also expire after 24h.
+// TTL index: attendance submissions expire after 24h
 AttendanceSchema.index(
   { createdAt: 1 },
   {
     expireAfterSeconds: 60 * 60 * 24,
-  },
+  }
 );
 
-export const AttendanceModel = mongoose.model<AttendanceDocument>(
-  "Attendance",
-  AttendanceSchema,
-);
+const AttendanceModel = mongoose.model("Attendance", AttendanceSchema);
 
-
+module.exports = AttendanceModel;

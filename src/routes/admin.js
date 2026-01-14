@@ -1,16 +1,16 @@
-import express from "express";
-import { requireAdmin, AuthRequest } from "../middleware/auth";
-import { SessionModel } from "../models/Session";
-import { AttendanceModel } from "../models/Attendance";
+const express = require("express");
+const { requireAdmin } = require("../middleware/auth");
+const SessionModel = require("../models/Session");
+const AttendanceModel = require("../models/Attendance");
 
-export const adminRouter = express.Router();
+const adminRouter = express.Router();
 
 // All admin routes require a valid admin token.
 adminRouter.use(requireAdmin);
 
 // GET /api/admin/summary
 // Returns counts for dashboard stats.
-adminRouter.get("/summary", async (_req: AuthRequest, res, next) => {
+adminRouter.get("/summary", async (_req, res, next) => {
   try {
     const now = new Date();
     const [totalSessions, activeSessions, totalSubmissions] = await Promise.all([
@@ -34,7 +34,7 @@ adminRouter.get("/summary", async (_req: AuthRequest, res, next) => {
 
 // GET /api/admin/sessions
 // List recent sessions with attendance counts.
-adminRouter.get("/sessions", async (_req: AuthRequest, res, next) => {
+adminRouter.get("/sessions", async (_req, res, next) => {
   try {
     const sessions = await SessionModel.find({})
       .sort({ createdAt: -1 })
@@ -47,7 +47,7 @@ adminRouter.get("/sessions", async (_req: AuthRequest, res, next) => {
       { $group: { _id: "$sessionId", count: { $sum: 1 } } },
     ]);
 
-    const countMap = new Map<string, number>();
+    const countMap = new Map();
     counts.forEach((c) => {
       countMap.set(String(c._id), c.count);
     });
@@ -60,8 +60,8 @@ adminRouter.get("/sessions", async (_req: AuthRequest, res, next) => {
         radiusMeters: s.radiusMeters,
         startsAt: s.startsAt,
         endsAt: s.endsAt,
-        submissions: countMap.get(String(s._id)) ?? 0,
-      })),
+        submissions: countMap.get(String(s._id)) || 0,
+      }))
     );
   } catch (err) {
     next(err);
@@ -70,7 +70,7 @@ adminRouter.get("/sessions", async (_req: AuthRequest, res, next) => {
 
 // DELETE /api/admin/sessions/:token
 // Deletes a session and all associated attendance submissions.
-adminRouter.delete("/sessions/:token", async (req: AuthRequest, res, next) => {
+adminRouter.delete("/sessions/:token", async (req, res, next) => {
   try {
     const { token } = req.params;
     const session = await SessionModel.findOne({ token });
@@ -87,4 +87,4 @@ adminRouter.delete("/sessions/:token", async (req: AuthRequest, res, next) => {
   }
 });
 
-
+module.exports = adminRouter;
