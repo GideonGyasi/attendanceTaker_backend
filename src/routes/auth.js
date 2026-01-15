@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { AdminModel } = require("../models/Admin");
+const  AdminModel  = require("../models/Admin");
 const { signAdminToken, requireAdmin } = require("../middleware/auth");
 
 const authRouter = express.Router();
