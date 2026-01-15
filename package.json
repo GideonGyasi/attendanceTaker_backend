@@ -1,11 +1,10 @@
 {
   "name": "attendance-backend",
   "version": "1.0.0",
-  "description": "Classroom attendance backend (Express + TypeScript + MongoDB)",
-  "main": "dist/index.js",
+  "description": "Classroom attendance backend (Express + MongoDB)",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "start": "node src/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,8 +19,5 @@
     "mongoose": "^8.21.0",
     "morgan": "^1.10.1",
     "pdfkit": "^0.15.2"
-  },
-  "devDependencies": {
-    "ts-node-dev": "^2.0.0"
   }
 }
