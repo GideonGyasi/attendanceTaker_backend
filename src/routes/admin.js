@@ -10,16 +10,22 @@ adminRouter.use(requireAdmin);
 
 // GET /api/admin/summary
 // Returns counts for dashboard stats.
-adminRouter.get("/summary", async (_req, res, next) => {
+adminRouter.get("/summary", async (req, res, next) => {
   try {
     const now = new Date();
+    const adminId = req.adminId;
+
     const [totalSessions, activeSessions, totalSubmissions] = await Promise.all([
-      SessionModel.countDocuments({}),
+      SessionModel.countDocuments({ adminId }),
       SessionModel.countDocuments({
+        adminId,
         startsAt: { $lte: now },
         endsAt: { $gte: now },
       }),
-      AttendanceModel.countDocuments({}),
+      // Count submissions for sessions owned by this admin
+      AttendanceModel.countDocuments({
+        sessionId: { $in: await SessionModel.find({ adminId }).distinct('_id') }
+      }),
     ]);
 
     res.json({
@@ -34,9 +40,11 @@ adminRouter.get("/summary", async (_req, res, next) => {
 
 // GET /api/admin/sessions
 // List recent sessions with attendance counts.
-adminRouter.get("/sessions", async (_req, res, next) => {
+adminRouter.get("/sessions", async (req, res, next) => {
   try {
-    const sessions = await SessionModel.find({})
+    const adminId = req.adminId;
+
+    const sessions = await SessionModel.find({ adminId })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
@@ -73,9 +81,11 @@ adminRouter.get("/sessions", async (_req, res, next) => {
 adminRouter.delete("/sessions/:token", async (req, res, next) => {
   try {
     const { token } = req.params;
-    const session = await SessionModel.findOne({ token });
+    const adminId = req.adminId;
+
+    const session = await SessionModel.findOne({ token, adminId });
     if (!session) {
-      return res.status(404).json({ error: "Session not found" });
+      return res.status(404).json({ error: "Session not found or access denied" });
     }
 
     await AttendanceModel.deleteMany({ sessionId: session._id });

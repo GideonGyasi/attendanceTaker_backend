@@ -11,6 +11,11 @@ const SessionSchema = new Schema(
       unique: true, // Prevent collision of session tokens
       index: true,
     },
+    adminId: {
+      type: Schema.Types.ObjectId,
+      required: false, // TODO: Make required after migrating existing sessions
+      index: true, // Index for efficient admin-based queries
+    },
     courseName: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },

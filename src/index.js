@@ -4,59 +4,102 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
-const { json } = require("body-parser");
+const bodyParser = require("body-parser");
+const passport = require("passport");
+const session = require("express-session");
 
-const sessionRouter  = require("./routes/session");
-const attendanceRouter  = require("./routes/attendance");
+const sessionRouter = require("./routes/session");
+const attendanceRouter = require("./routes/attendance");
 const authRouter = require("./routes/auth");
-const  adminRouter = require("./routes/admin");
+const adminRouter = require("./routes/admin");
 
-// Basic configuration with sane defaults for local development
-const PORT = process.env.PORT || 4000;
-const MONGO_URI =
-  process.env.MONGO_URI;
+const PORT = process.env.PORT || 8000;
+const MONGO_URI = process.env.MONGO_URI;
+
+// ✅ Allowed frontend origins from environment variable
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [
+  "http://localhost:5173",
+  "https://attendancetaker-frontend.vercel.app",
+];
 
 async function start() {
-  // Connect to MongoDB
   await mongoose.connect(MONGO_URI);
+  console.log("MongoDB connected");
 
   const app = express();
 
-  // Security + logging middleware
+  // 🔐 Security headers
   app.use(helmet());
+
+  // ✅ CORS — THIS IS THE IMPORTANT PART
   app.use(
     cors({
-      origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+      origin: function (origin, callback) {
+        // Allow requests with no origin (Postman, mobile apps)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`CORS blocked origin: ${origin}`));
+        }
+      },
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true, // important for auth
     })
   );
-  app.use(morgan("dev"));
-  app.use(json());
 
-  // API routes
+  // ✅ Handle preflight explicitly
+  app.options("*", cors());
+
+  // 🪵 Logging
+  app.use(morgan("dev"));
+
+  // 📦 Body parsing
+  app.use(bodyParser.json());
+
+  // � Session middleware for Passport
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
+  // 🛂 Passport middleware
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // �🚏 Routes
   app.use("/api/sessions", sessionRouter);
   app.use("/api/attendance", attendanceRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/admin", adminRouter);
 
-  // Simple healthcheck
+  // ❤️ Health check
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
 
-  // Global error handler with clean JSON responses
+  // ❌ Global error handler
   app.use((err, _req, res, _next) => {
-    console.error("Unhandled error:", err);
-    res
-      .status(err.statusCode || 500)
-      .json({ error: err.message || "Internal server error" });
+    console.error("Unhandled error:", err.message);
+    res.status(500).json({
+      error: err.message || "Internal server error",
+    });
   });
 
   app.listen(PORT, () => {
-    console.log(`Attendance backend listening on port ${PORT}`);
+    console.log(`🚀 Attendance backend running on port ${PORT}`);
   });
 }
 
 start().catch((err) => {
-  console.error("Failed to start server", err);
+  console.error("❌ Failed to start server", err);
   process.exit(1);
 });

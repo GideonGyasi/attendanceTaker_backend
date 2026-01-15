@@ -2,12 +2,13 @@ const express = require("express");
 const crypto = require("crypto");
 const  SessionModel  = require("../models/Session");
 const  AttendanceModel  = require("../models/Attendance");
+const { requireAdmin } = require("../middleware/auth");
 
 const sessionRouter = express.Router();
 
 // POST /api/sessions
 // Creates a new attendance session and returns a secure token.
-sessionRouter.post("/", async (req, res, next) => {
+sessionRouter.post("/", requireAdmin, async (req, res, next) => {
   try {
     const { courseName, latitude, longitude, radiusMeters, startsAt, endsAt } = req.body || {};
 
@@ -35,6 +36,7 @@ sessionRouter.post("/", async (req, res, next) => {
 
     const session = await SessionModel.create({
       token,
+      adminId: req.adminId, // Associate session with the authenticated admin
       courseName,
       latitude,
       longitude,
@@ -87,24 +89,23 @@ sessionRouter.get("/:token", async (req, res, next) => {
 });
 
 // GET /api/sessions/:token/attendance.csv
-sessionRouter.get("/:token/attendance.csv", async (req, res, next) => {
+sessionRouter.get("/:token/attendance.csv", requireAdmin, async (req, res, next) => {
   try {
     const { token } = req.params;
-    const session = await SessionModel.findOne({ token }).lean();
-    if (!session) return res.status(404).json({ error: "Session not found" });
+    const adminId = req.adminId;
+
+    const session = await SessionModel.findOne({ token, adminId }).lean();
+    if (!session) return res.status(404).json({ error: "Session not found or access denied" });
 
     const records = await AttendanceModel.find({ sessionId: session._id })
       .lean()
       .sort({ createdAt: 1 });
 
     const header = [
-      "fullName",
-      "studentNumber",
-      "studentId",
-      "indexNumber",
-      "latitude",
-      "longitude",
-      "createdAt",
+      "Full Name",
+      "Student Number",
+      "Student ID",
+      "Index Number"
     ];
 
     const escape = (value) => {
@@ -114,27 +115,35 @@ sessionRouter.get("/:token/attendance.csv", async (req, res, next) => {
     };
 
     const lines = [header.join(","), ...records.map((r) =>
-      [r.fullName, r.studentNumber, r.studentId, r.indexNumber, r.latitude, r.longitude, r.createdAt.toISOString()]
+      [r.fullName, r.studentNumber, r.studentId, r.indexNumber]
         .map(escape)
         .join(",")
     )];
 
     const csv = lines.join("\n");
 
-    res.setHeader("Content-Disposition", `attachment; filename="attendance-${session.token}.csv"`);
+    // Sanitize course name for filename
+    const sanitizedCourseName = session.courseName.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+
+    // Add UTF-8 BOM for better Excel compatibility
+    const BOM = '\uFEFF';
+
+    res.setHeader("Content-Disposition", `attachment; filename="${sanitizedCourseName}_attendance.csv"`);
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.send(csv);
+    res.send(BOM + csv);
   } catch (err) {
     next(err);
   }
 });
 
 // GET /api/sessions/:token/attendance.pdf
-sessionRouter.get("/:token/attendance.pdf", async (req, res, next) => {
+sessionRouter.get("/:token/attendance.pdf", requireAdmin, async (req, res, next) => {
   try {
     const { token } = req.params;
-    const session = await SessionModel.findOne({ token }).lean();
-    if (!session) return res.status(404).json({ error: "Session not found" });
+    const adminId = req.adminId;
+
+    const session = await SessionModel.findOne({ token, adminId }).lean();
+    if (!session) return res.status(404).json({ error: "Session not found or access denied" });
 
     const records = await AttendanceModel.find({ sessionId: session._id })
       .lean()
