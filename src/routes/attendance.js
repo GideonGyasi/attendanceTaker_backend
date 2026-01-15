@@ -1,7 +1,7 @@
 const express = require("express");
-const { SessionModel } = require("../models/Session");
-const { AttendanceModel } = require("../models/Attendance");
-const { haversineDistanceMeters } = require("../utils/geo");
+const  SessionModel  = require("../models/Session");
+const  AttendanceModel  = require("../models/Attendance");
+const  haversineDistanceMeters  = require("../utils/geo");
 
 const attendanceRouter = express.Router();
 

@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
-const { SessionModel } = require("../models/Session");
-const { AttendanceModel } = require("../models/Attendance");
+const  SessionModel  = require("../models/Session");
+const  AttendanceModel  = require("../models/Attendance");
 
 const sessionRouter = express.Router();
 
