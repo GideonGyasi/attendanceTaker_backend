@@ -5,8 +5,6 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const passport = require("passport");
-const session = require("express-session");
 
 const sessionRouter = require("./routes/session");
 const attendanceRouter = require("./routes/attendance");
@@ -59,21 +57,6 @@ async function start() {
   // 📦 Body parsing
   app.use(bodyParser.json());
 
-  // � Session middleware for Passport
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
-
-  // 🛂 Passport middleware
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   // �🚏 Routes
   app.use("/api/sessions", sessionRouter);
