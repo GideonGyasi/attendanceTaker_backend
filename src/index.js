@@ -17,7 +17,7 @@ const MONGO_URI = process.env.MONGO_URI;
 // ✅ Allowed frontend origins from environment variable
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [
   "http://localhost:5173",
-  "https://attendancetaker-frontend.vercel.app",
+  "https://tendanz.vercel.app",
 ];
 
 async function start() {
