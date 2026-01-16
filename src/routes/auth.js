@@ -19,7 +19,7 @@ authRouter.post("/register", async (req, res, next) => {
       return res.status(409).json({ error: "Admin with this email already exists" });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 8);
     const admin = await AdminModel.create({ email, passwordHash });
     const token = signAdminToken(admin._id.toString());
 
