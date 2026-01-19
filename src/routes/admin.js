@@ -95,6 +95,8 @@ adminRouter.delete("/sessions/:token", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
 // POST /api/admin/sessions/:token/attendance
 // Manually add attendance for a student (admin only)
 adminRouter.post("/sessions/:token/attendance", async (req, res, next) => {
