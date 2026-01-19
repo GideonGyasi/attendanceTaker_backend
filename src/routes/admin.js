@@ -95,6 +95,56 @@ adminRouter.delete("/sessions/:token", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+// POST /api/admin/sessions/:token/attendance
+// Manually add attendance for a student (admin only)
+adminRouter.post("/sessions/:token/attendance", async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const adminId = req.adminId;
+
+    const {
+      fullName,
+      studentNumber,
+      indexNumber,
+    } = req.body || {};
+
+    if (!fullName || !studentNumber || !indexNumber) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const session = await SessionModel.findOne({ token, adminId });
+    if (!session) {
+      return res.status(404).json({ error: "Session not found or access denied" });
+    }
+
+    // Use session center as location for manual entries
+    const latitude = session.latitude;
+    const longitude = session.longitude;
+
+    try {
+      const submission = await AttendanceModel.create({
+        sessionId: session._id,
+        token: session.token,
+        fullName,
+        studentNumber,
+        indexNumber,
+        latitude,
+        longitude,
+      });
+
+      res.status(201).json({
+        id: submission._id,
+        createdAt: submission.createdAt,
+      });
+    } catch (err) {
+      if (err && err.code === 11000) {
+        return res.status(409).json({ error: "Attendance already submitted for this student" });
+      }
+      throw err;
+    }
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = adminRouter;

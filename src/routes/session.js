@@ -104,7 +104,6 @@ sessionRouter.get("/:token/attendance.csv", requireAdmin, async (req, res, next)
     const header = [
       "Full Name",
       "Student Number",
-      "Student ID",
       "Index Number"
     ];
 
@@ -115,7 +114,7 @@ sessionRouter.get("/:token/attendance.csv", requireAdmin, async (req, res, next)
     };
 
     const lines = [header.join(","), ...records.map((r) =>
-      [r.fullName, r.studentNumber, r.studentId, r.indexNumber]
+      [r.fullName, r.studentNumber, r.indexNumber]
         .map(escape)
         .join(",")
     )];
@@ -165,7 +164,7 @@ sessionRouter.get("/:token/attendance.pdf", requireAdmin, async (req, res, next)
 
     records.forEach((r, index) => {
       doc.fontSize(11).text(
-        `${index + 1}. ${r.fullName} | Student No: ${r.studentNumber} | ID: ${r.studentId} | Index: ${r.indexNumber} | Time: ${r.createdAt.toISOString()}`
+        `${index + 1}. ${r.fullName} | Student No: ${r.studentNumber} | Index: ${r.indexNumber} | Time: ${r.createdAt.toISOString()}`
       );
     });
 

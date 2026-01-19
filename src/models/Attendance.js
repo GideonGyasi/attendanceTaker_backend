@@ -17,7 +17,6 @@ const AttendanceSchema = new Schema(
     },
     fullName: { type: String, required: true },
     studentNumber: { type: String, required: true },
-    studentId: { type: String, required: true },
     indexNumber: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
@@ -32,7 +31,6 @@ AttendanceSchema.index(
   {
     sessionId: 1,
     studentNumber: 1,
-    studentId: 1,
     indexNumber: 1,
   },
   { unique: true }
