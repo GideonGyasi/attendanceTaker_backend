@@ -14,7 +14,6 @@ attendanceRouter.post("/:token", async (req, res, next) => {
     const {
       fullName,
       studentNumber,
-      studentId,
       indexNumber,
       latitude,
       longitude,
@@ -23,7 +22,6 @@ attendanceRouter.post("/:token", async (req, res, next) => {
     if (
       !fullName ||
       !studentNumber ||
-      !studentId ||
       !indexNumber ||
       typeof latitude !== "number" ||
       typeof longitude !== "number"
@@ -59,7 +57,6 @@ attendanceRouter.post("/:token", async (req, res, next) => {
         token: session.token,
         fullName,
         studentNumber,
-        studentId,
         indexNumber,
         latitude,
         longitude,
