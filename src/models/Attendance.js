@@ -20,28 +20,23 @@ const AttendanceSchema = new Schema(
     indexNumber: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
+    isAdminEntry: { type: Boolean, default: false }, // <-- admin bypass flag
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
   }
 );
 
-// Enforce "one submission per session per student" using a compound index
+// Unique index for normal students only (admin entries bypass uniqueness)
 AttendanceSchema.index(
-  {
-    sessionId: 1,
-    studentNumber: 1,
-    indexNumber: 1,
-  },
-  { unique: true }
+  { sessionId: 1, studentNumber: 1, indexNumber: 1 },
+  { unique: true, partialFilterExpression: { isAdminEntry: false } }
 );
 
 // TTL index: attendance submissions expire after 24h
 AttendanceSchema.index(
   { createdAt: 1 },
-  {
-    expireAfterSeconds: 60 * 60 * 24,
-  }
+  { expireAfterSeconds: 60 * 60 * 24 }
 );
 
 const AttendanceModel = mongoose.model("Attendance", AttendanceSchema);

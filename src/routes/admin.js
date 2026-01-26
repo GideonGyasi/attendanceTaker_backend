@@ -22,9 +22,8 @@ adminRouter.get("/summary", async (req, res, next) => {
         startsAt: { $lte: now },
         endsAt: { $gte: now },
       }),
-      // Count submissions for sessions owned by this admin
       AttendanceModel.countDocuments({
-        sessionId: { $in: await SessionModel.find({ adminId }).distinct('_id') }
+        sessionId: { $in: await SessionModel.find({ adminId }).distinct('_id') },
       }),
     ]);
 
@@ -104,11 +103,7 @@ adminRouter.post("/sessions/:token/attendance", async (req, res, next) => {
     const { token } = req.params;
     const adminId = req.adminId;
 
-    const {
-      fullName,
-      studentNumber,
-      indexNumber,
-    } = req.body || {};
+    const { fullName, studentNumber, indexNumber } = req.body || {};
 
     if (!fullName || !studentNumber || !indexNumber) {
       return res.status(400).json({ error: "All fields are required" });
@@ -123,27 +118,22 @@ adminRouter.post("/sessions/:token/attendance", async (req, res, next) => {
     const latitude = session.latitude;
     const longitude = session.longitude;
 
-    try {
-      const submission = await AttendanceModel.create({
-        sessionId: session._id,
-        token: session.token,
-        fullName,
-        studentNumber,
-        indexNumber,
-        latitude,
-        longitude,
-      });
+    // ✅ Admin entries can bypass unique compound index
+    const submission = await AttendanceModel.create({
+      sessionId: session._id,
+      token: session.token,
+      fullName,
+      studentNumber,
+      indexNumber,
+      latitude,
+      longitude,
+      isAdminEntry: true, // <-- allows multiple submissions for same student
+    });
 
-      res.status(201).json({
-        id: submission._id,
-        createdAt: submission.createdAt,
-      });
-    } catch (err) {
-      if (err && err.code === 11000) {
-        return res.status(409).json({ error: "Attendance already submitted for this student" });
-      }
-      throw err;
-    }
+    res.status(201).json({
+      id: submission._id,
+      createdAt: submission.createdAt,
+    });
   } catch (err) {
     next(err);
   }
